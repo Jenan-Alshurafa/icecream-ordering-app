@@ -1,0 +1,568 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'pick.dart';
+import 'cart.dart';
+import 'cartmodel.dart';
+
+
+class ExploreApp extends StatefulWidget {
+  const ExploreApp({super.key});
+ @override
+ State<ExploreApp> createState() => _ExploreAppState();
+}
+
+class _ExploreAppState extends State<ExploreApp>{
+  final List<CartItem> cart = [];
+
+  void addToCart(CartItem item){
+    setState(() {
+      cart.add(item);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const Color primary = Color(0xFFecc6d5);
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Ice Cream App',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: primary),
+        scaffoldBackgroundColor: Colors.white,
+        useMaterial3: true,
+        textTheme: GoogleFonts.poppinsTextTheme(),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0,
+          centerTitle: false,
+        ),
+      ),
+      home: _MainShell(
+        cart: cart,
+        addToCart: addToCart,
+      ),
+    );
+  }
+}
+class _MainShell extends StatefulWidget {
+  final List<CartItem> cart;
+  final void Function(CartItem) addToCart;
+
+  const _MainShell({ required this.cart, required this.addToCart});
+
+  @override
+  State<_MainShell> createState() => _MainShellState();
+}
+
+
+class _MainShellState extends State<_MainShell> {
+  int _currentIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final pages = <Widget>[
+      ExplorePage(addToCart: widget.addToCart),
+      const _PlaceholderPage(title: 'Search'),
+      const _PlaceholderPage(title: 'Notifications'),
+      CartPage(cart: widget.cart),
+    ];
+
+    return Scaffold(
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: pages[_currentIndex],
+      ),
+      bottomNavigationBar: _BottomNav(
+        currentIndex: _currentIndex,
+        onTap: (i) => setState(() => _currentIndex = i),
+      ),
+    );
+  }
+}
+
+class _BottomNav extends StatelessWidget {
+  const _BottomNav({
+    required this.currentIndex,
+    required this.onTap,
+  });
+
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const Color primary = Color(0xFFecc6d5);
+    return SafeArea(
+      top: false,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 12,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _NavItem(icon: Icons.home_outlined, index: 0, current: currentIndex, onTap: onTap),
+            const SizedBox(width: 20),
+            _NavItem(icon: Icons.search, index: 1, current: currentIndex, onTap: onTap),
+            const SizedBox(width: 20),
+            _NavItem(icon: Icons.notifications_none, index: 2, current: currentIndex, onTap: onTap),
+            const SizedBox(width: 20),
+            _NavItem(icon: Icons.shopping_bag_outlined, index: 3, current: currentIndex, onTap: onTap, highlightColor: primary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.icon,
+    required this.index,
+    required this.current,
+    required this.onTap,
+    this.highlightColor = const Color(0xFFecc6d5),
+  });
+
+  final IconData icon;
+  final int index;
+  final int current;
+  final ValueChanged<int> onTap;
+  final Color highlightColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool selected = index == current;
+    return GestureDetector(
+      onTap: () => onTap(index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? highlightColor.withOpacity(0.25) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(
+          icon,
+          color: selected ? highlightColor : Colors.grey.shade600,
+        ),
+      ),
+    );
+  }
+}
+
+class ExplorePage extends StatefulWidget {
+  final void Function(CartItem) addToCart;
+  const ExplorePage({super.key, required this.addToCart});
+
+  @override
+  State<ExplorePage> createState() => _ExplorePageState();
+}
+
+class _ExplorePageState extends State<ExplorePage> {
+  int _selectedCategory = 0;
+
+  static const categories = [
+    ('Cups', Icons.icecream),
+    ('Rolls', Icons.waves),
+    ('Sandwich', Icons.layers),
+    ('Cakes', Icons.cake_outlined),
+  ];
+
+  final List<_Product> _popularCups = const [
+    _Product(name: 'Mint Cup', asset: 'assets/images/mintcone.png', rating: 4.8, price: 5.75, description:'trtsets',  pricesBySize: {'S': 5.75, 'M': 7.75, 'L': 9.75},),
+    _Product(name: 'Blueberry Cup', asset: 'assets/images/blueberrycone.png', rating: 4.7, price: 5.50, description:'trtsets',  pricesBySize: {'S': 5.75, 'M': 7.75, 'L': 9.75},),
+    _Product(name: 'Caramel Cup', asset: 'assets/images/caramelcone.png', rating: 4.6, price: 6.00, description:'trtsets',  pricesBySize: {'S': 5.75, 'M': 7.75, 'L': 9.75},),
+    _Product(name: 'Oreo Cup', asset: 'assets/images/oreocone.png', rating: 4.5, price: 5.25, description:'trtsets',  pricesBySize: {'S': 5.75, 'M': 7.75, 'L': 9.75},),
+    _Product(name: 'Mixed Cup', asset: 'assets/images/mixedcone.png', rating: 4.9, price: 6.50, description:'trtsets', pricesBySize: {'S': 5.75, 'M': 7.75, 'L': 9.75},),
+  ];
+
+  final List<_Product> _popularRolls = const [
+    _Product(name: 'Banana Rolls', asset: 'assets/images/bananarolls.png', rating: 4.9, price: 7.25, description:'trtsets', pricesBySize: {'S': 5.75, 'M': 7.75, 'L': 9.75},),
+    _Product(name: 'Penutbutter Rolls', asset: 'assets/images/penubutterrolls.png', rating: 4.7, price: 6.75, description:'trtsets', pricesBySize: {'S': 5.75, 'M': 7.75, 'L': 9.75},),
+    _Product(name: 'Bnanaberry Rolls', asset: 'assets/images/bananaberryrolls.png', rating: 4.8, price: 7.00, description:'trtsets', pricesBySize: {'S': 5.75, 'M': 7.75, 'L': 9.75},),
+    _Product(name: 'Brownie Rolls', asset: 'assets/images/BrownieRolls.png', rating: 4.6, price: 6.50, description:'trtsets', pricesBySize: {'S': 5.75, 'M': 7.75, 'L': 9.75},),
+  ];
+
+  final List<_Product> _popularSandwich = const [
+    _Product(name: 'Straberry Sandwich', asset: 'assets/images/strasandwitch.png', rating: 4.9, price: 8.25, description:'trtsets', pricesBySize: {'S': 5.75, 'M': 7.75, 'L': 9.75},),
+    _Product(name: 'Pistachio Sandwich', asset: 'assets/images/pistachio1.png', rating: 4.8, price: 7.75, description:'trtsets', pricesBySize: {'S': 5.75, 'M': 7.75, 'L': 9.75},),
+    _Product(name: 'Chocolate Sandwich', asset: 'assets/images/chocolate1.png', rating: 4.7, price: 8.00, description:'trtsets', pricesBySize: {'S': 5.75, 'M': 7.75, 'L': 9.75},),
+  ];
+
+  final List<_Product> _popularCakes = const [
+    _Product(name: 'Oreo Cake', asset: 'assets/images/oreocake.png', rating: 4.8, price: 12.50, description:'trtsets', pricesBySize: {'S': 5.75, 'M': 7.75, 'L': 9.75},),
+    _Product(name: 'Berries Cake', asset: 'assets/images/berriescake.png', rating: 4.7, price: 11.75, description:'trtsets', pricesBySize: {'S': 5.75, 'M': 7.75, 'L': 9.75},),
+    _Product(name: 'Strawberry Cake', asset: 'assets/images/straberrycake.png', rating: 4.9, price: 13.00, description:'trtsets', pricesBySize: {'S': 5.75, 'M': 7.75, 'L': 9.75},),
+  ];
+
+  // Simple demo favorites. You can later wire this to real user choices.
+  final List<_Product> _favoriteProducts = const [
+    _Product(name: 'Pistachio Cup', asset: 'assets/images/oreocone.png', rating: 4.8, price: 5.25, description:'trtsets', pricesBySize: {'S': 5.75, 'M': 7.75, 'L': 9.75},),
+    _Product(name: 'Chocolate Sandwich', asset: 'assets/images/chocolate1.png', rating: 4.7, price: 8.00, description:'trtsets', pricesBySize: {'S': 5.75, 'M': 7.75, 'L': 9.75},),
+  ];
+
+  List<_Product> get _currentProducts {
+    switch (_selectedCategory) {
+      case 0: return _popularCups;
+      case 1: return _popularRolls;
+      case 2: return _popularSandwich;
+      case 3: return _popularCakes;
+      default: return _popularCups;
+    }
+  }
+
+  String get _currentSectionTitle {
+    switch (_selectedCategory) {
+      case 0: return 'Popular Cups';
+      case 1: return 'Popular Rolls';
+      case 2: return 'Popular Sandwiches';
+      case 3: return 'Popular Cakes';
+      default: return 'Popular Cups';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const Color primary = Color(0xFFecc6d5);
+
+    final double bottomInset = MediaQuery.of(context).padding.bottom;
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: _Header(primary: primary),
+        ),
+        const SliverToBoxAdapter(
+          child: SizedBox(height: 24),
+        ),
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 120,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              scrollDirection: Axis.horizontal,
+              itemCount: categories.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final (title, icon) = categories[index];
+                final bool selected = index == _selectedCategory;
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedCategory = index),
+                  child: Container(
+                    width: 100,
+                    decoration: BoxDecoration(
+                      color: selected ? primary.withOpacity(0.25) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                      border: Border.all(color: selected ? primary : Colors.grey.shade200),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(icon, color: selected ? primary : Colors.grey.shade600, size: 35,),
+                        const SizedBox(height: 4),
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: selected ? primary : Colors.grey.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(
+          child: SizedBox(height: 16),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 19),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _currentSectionTitle,
+                  style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 2),
+                    child: Divider(
+                      color: Colors.black.withOpacity(0.12),
+                      thickness: 1,
+                      height: 1,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text('See all', style: TextStyle(color: primary, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(
+          child: SizedBox(height: 20),
+        ),
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 220,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              scrollDirection: Axis.horizontal,
+              itemBuilder: (context, index) {
+                final p = _currentProducts[index % _currentProducts.length];
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProductDetailPage(
+                          product: Product(
+                              name: p.name,
+                        pricesBySize: p.pricesBySize,
+                          image: p.asset,
+                         description: p.description,
+                         ),
+                        addToCart: widget.addToCart,
+                        ),
+                      ),
+                    );
+                  },
+                  child: _ProductCard(product: p),
+                );
+              },
+              separatorBuilder: (_, __) => const SizedBox(width: 14),
+              itemCount: _currentProducts.length,
+            ),
+          ),
+        ),
+        // Space before Your Favorites
+        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        // Your Favorites header with divider
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 19),
+            child: Row(
+              children: [
+                Text(
+                  'Your Favorites',
+                  style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 2),
+                    child: Divider(
+                      color: Colors.black.withOpacity(0.12),
+                      thickness: 1,
+                      height: 1,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 16)),
+        // Favorites horizontal list
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 200,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              scrollDirection: Axis.horizontal,
+              itemBuilder: (context, index) {
+                final p = _favoriteProducts[index % _favoriteProducts.length];
+                return _ProductCard(product: p);
+              },
+              separatorBuilder: (_, __) => const SizedBox(width: 14),
+              itemCount: _favoriteProducts.length,
+            ),
+          ),
+        ),
+        // Spacer to keep content clear of bottom nav + gesture area
+        SliverToBoxAdapter(
+          child: SizedBox(height: kBottomNavigationBarHeight + bottomInset + 12),
+        ),
+      ],
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  const _Header({required this.primary});
+
+  final Color primary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.only(top: 24, bottom: 16),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            height: 220,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: primary.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(18),
+            ),
+          ),
+          Positioned.fill(
+            child: Row(
+              children: [
+                const SizedBox(width: 28),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('PICK YOUR',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1,
+                          )),
+                      Text(
+                        'Favorite Choice',
+                        style: GoogleFonts.pacifico(color: Colors.white, fontSize: 26),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+            ),
+          ),
+          Positioned(
+            right: -34,
+            bottom: -32,
+            child: SizedBox(
+              height: 250,
+              width: 280,
+              child: Image.asset(
+                'assets/images/strawberryyy1.png',
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProductCard extends StatelessWidget {
+  const _ProductCard({required this.product});
+
+  final _Product product;
+
+  @override
+  Widget build(BuildContext context) {
+    const Color primary = Color(0xFFecc6d5);
+    return Container(
+      width: 180,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Center(
+              child: Image.asset(product.asset, fit: BoxFit.contain),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            product.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              ...List.generate(5, (i) {
+                final filled = product.rating - i >= 1;
+                return Icon(
+                  filled ? Icons.star : Icons.star_border,
+                  color: primary,
+                  size: 16,
+                );
+              }),
+              const SizedBox(width: 6),
+              Text(product.rating.toStringAsFixed(1),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class _Product {
+  const _Product({
+    required this.name,
+    required this.asset,
+    required this.rating,
+    required this.price,
+    this.description = '',
+    required this.pricesBySize, // ← أضيفي required هنا
+  });
+
+  final String name;
+  final String asset;
+  final double rating;
+  final double price;
+  final String description;
+  final Map<String, double> pricesBySize; // ← بدون ?
+}
+
+class _PlaceholderPage extends StatelessWidget {
+  const _PlaceholderPage({required this.title});
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(title, style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w600)),
+    );
+  }
+}
