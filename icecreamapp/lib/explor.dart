@@ -1,3 +1,7 @@
+
+
+
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'pick.dart';
@@ -7,14 +11,18 @@ import 'cartmodel.dart';
 
 class ExploreApp extends StatefulWidget {
   const ExploreApp({super.key});
- @override
- State<ExploreApp> createState() => _ExploreAppState();
+  @override
+  State<ExploreApp> createState() => _ExploreAppState();
 }
 
-class _ExploreAppState extends State<ExploreApp>{
+
+
+class _ExploreAppState extends State<ExploreApp> {
   final List<CartItem> cart = [];
 
-  void addToCart(CartItem item){
+
+
+  void addToCart(CartItem item) {
     setState(() {
       cart.add(item);
     });
@@ -45,19 +53,99 @@ class _ExploreAppState extends State<ExploreApp>{
     );
   }
 }
+
+
+
 class _MainShell extends StatefulWidget {
   final List<CartItem> cart;
   final void Function(CartItem) addToCart;
 
-  const _MainShell({ required this.cart, required this.addToCart});
+
+  const _MainShell({required this.cart, required this.addToCart});
 
   @override
   State<_MainShell> createState() => _MainShellState();
 }
 
 
-class _MainShellState extends State<_MainShell> {
+class _MainShellState extends State<_MainShell> with TickerProviderStateMixin {
   int _currentIndex = 0;
+
+  late AnimationController _fabAnimationController;
+  late Animation<double> fabAnimation;
+
+  late AnimationController _borderRadiusAnimationController;
+  late Animation<double> borderRadiusAnimation;
+
+  late AnimationController _revealController;
+  late Animation<double> _revealAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // FAB animation
+    _fabAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    fabAnimation = CurvedAnimation(
+      parent: _fabAnimationController,
+      curve: Curves.easeOutBack,
+    );
+
+    // Bottom nav border radius animation
+    _borderRadiusAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    borderRadiusAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(
+        parent: _borderRadiusAnimationController,
+        curve: Curves.fastOutSlowIn,
+      ),
+    );
+
+    // Circular reveal controller
+    _revealController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _revealAnimation = CurvedAnimation(
+      parent: _revealController,
+      curve: Curves.easeInOut,
+    );
+
+    // Initial animations
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _fabAnimationController.forward();
+      _borderRadiusAnimationController.forward();
+      _revealController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _fabAnimationController.dispose();
+    _borderRadiusAnimationController.dispose();
+    _revealController.dispose();
+    super.dispose();
+  }
+
+  void _onNavTap(int index) {
+    _revealController.reset();
+    setState(() {
+      _currentIndex = index;
+    });
+    _revealController.forward();
+    _fabAnimationController
+      ..reset()
+      ..forward();
+    _borderRadiusAnimationController
+      ..reset()
+      ..forward();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -72,67 +160,103 @@ class _MainShellState extends State<_MainShell> {
       body: SafeArea(
         top: true,
         bottom: false,
-        child: pages[_currentIndex],
+        child: AnimatedBuilder(
+          animation: _revealAnimation,
+          builder: (context, child) {
+            final radius = MediaQuery.of(context).size.longestSide * _revealAnimation.value;
+            return ClipOval(
+              clipper: _CircleRevealClipper(radius: radius),
+              child: pages[_currentIndex],
+            );
+          },
+
+        ),
       ),
-      bottomNavigationBar: _BottomNav(
-        currentIndex: _currentIndex,
-        onTap: (i) => setState(() => _currentIndex = i),
+      floatingActionButton: ScaleTransition(
+        scale: fabAnimation,
+        child: FloatingActionButton(
+          backgroundColor: Colors.white,
+          child: Icon(Icons.brightness_3, color: primary),
+          onPressed: () {
+            _fabAnimationController
+              ..reset()
+              ..forward();
+            _borderRadiusAnimationController
+              ..reset()
+              ..forward();
+          },
+        ),
       ),
-    );
-  }
-}
-
-class _BottomNav extends StatelessWidget {
-  const _BottomNav({
-    required this.currentIndex,
-    required this.onTap,
-  });
-
-  final int currentIndex;
-  final ValueChanged<int> onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    const Color primary = Color(0xFFecc6d5);
-    return SafeArea(
-      top: false,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 12,
-              offset: const Offset(0, -2),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: AnimatedBuilder(
+        animation: borderRadiusAnimation,
+        builder: (context, child) {
+          return Container(
+            margin: EdgeInsets.only(bottom: bottomInset),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(32 * borderRadiusAnimation.value),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(15),
+                  blurRadius: 12,
+                  offset: const Offset(0, -2),
+                ),
+              ],
             ),
-          ],
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _NavItem(icon: Icons.home_outlined, index: 0, current: currentIndex, onTap: onTap),
-            const SizedBox(width: 20),
-            _NavItem(icon: Icons.search, index: 1, current: currentIndex, onTap: onTap),
-            const SizedBox(width: 20),
-            _NavItem(icon: Icons.notifications_none, index: 2, current: currentIndex, onTap: onTap),
-            const SizedBox(width: 20),
-            _NavItem(icon: Icons.shopping_bag_outlined, index: 3, current: currentIndex, onTap: onTap, highlightColor: primary),
-          ],
-        ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(4, (index) {
+                final icons = [
+                  Icons.home_outlined,
+                  Icons.search,
+                  Icons.notifications_none,
+                  Icons.shopping_bag_outlined
+                ];
+
+                final selected = _currentIndex == index;
+
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () => _onNavTap(index),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: selected ? primary.withOpacity(0.15) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            icons[index],
+                            color: selected ? primary : Colors.grey.shade600,
+                            size: selected ? 28 : 24,
+                          ),
+                          const SizedBox(height: 4),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          );
+
+        },
       ),
     );
   }
 }
 
-class _NavItem extends StatelessWidget {
-  const _NavItem({
-    required this.icon,
-    required this.index,
-    required this.current,
-    required this.onTap,
-    this.highlightColor = const Color(0xFFecc6d5),
-  });
+class _CircleRevealClipper extends CustomClipper<Rect> {
+  final double radius;
+  _CircleRevealClipper({required this.radius});
 
   final IconData icon;
   final int index;
@@ -141,23 +265,10 @@ class _NavItem extends StatelessWidget {
   final Color highlightColor;
 
   @override
-  Widget build(BuildContext context) {
-    final bool selected = index == current;
-    return GestureDetector(
-      onTap: () => onTap(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? highlightColor.withOpacity(0.25) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(
-          icon,
-          color: selected ? highlightColor : Colors.grey.shade600,
-        ),
-      ),
-    );
+  bool shouldReclip(covariant _CircleRevealClipper oldClipper) {
+
+
+    return radius != oldClipper.radius;
   }
 }
 
@@ -261,11 +372,15 @@ class _ExplorePageState extends State<ExplorePage> {
                   child: Container(
                     width: 100,
                     decoration: BoxDecoration(
-                      color: selected ? primary.withOpacity(0.25) : Colors.white,
+
+
+                    color: selected ? primary.withAlpha(64) : Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
+
+
+                       color: Colors.black.withAlpha(15),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -492,7 +607,9 @@ class _ProductCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+
+
+           color: Colors.black.withAlpha(15),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
