@@ -140,11 +140,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 width: 70,
                 height: 70,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.5), // White with 50% opacity
+                color: Colors.white.withAlpha(128),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withAlpha(51),  
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
