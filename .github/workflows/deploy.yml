@@ -15,11 +15,15 @@ jobs:
           flutter-version: '3.x'
           channel: 'stable'
 
-      - run: flutter pub get
+      - name: Get dependencies
+        run: flutter pub get
+        working-directory: icecreamapp
 
-      - run: flutter build web --release --base-href "/icecream-ordering-app/"
+      - name: Build web
+        run: flutter build web --release --base-href "/icecream-ordering-app/"
+        working-directory: icecreamapp
 
       - uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build/web
+          publish_dir: ./icecreamapp/build/web
