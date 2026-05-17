@@ -65,10 +65,9 @@ my_flutter_app/
 
 ## 🔮 Planned Improvements
 
-- [ ] Connect favorites to real user preferences with local storage
-- [ ] Add search and notifications functionality
-- [ ] Persist cart across sessions
-- [ ] Add backend or Firebase integration for live ordering
-- [ ] Add animations on add-to-cart action
-
+- [x] Connect favorites to real user preferences with local storage
+- [x] Add search and notifications functionality
+- [x] Persist cart across sessions
+- [x] Add backend or Firebase integration for live ordering
+- [x] Add animations on add-to-cart action
 ---
