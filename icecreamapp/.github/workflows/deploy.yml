@@ -17,7 +17,7 @@ jobs:
 
       - run: flutter pub get
 
-      - run: flutter build web --release --base-href "/icecream-ordering-app/icecreamapp"
+      - run: flutter build web --release --base-href "/icecream-ordering-app/"
 
       - uses: peaceiris/actions-gh-pages@v3
         with:
